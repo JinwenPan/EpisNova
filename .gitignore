@@ -22,3 +22,6 @@ logs/
 
 # Arxiv Data
 arxiv_data
+
+# Digests
+digests/

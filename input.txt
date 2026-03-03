@@ -1,0 +1,3 @@
+I am interested in large language models, retrieval-augmented generation,
+and information retrieval. I focus on efficiency, evaluation, and
+real-world applications of these techniques.

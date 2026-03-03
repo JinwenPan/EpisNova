@@ -27,7 +27,7 @@ import requests
 # ---------------------------------------------------------------------------
 
 RSS_URL = "http://rss.arxiv.org/rss/cs"
-OUTPUT_DIR = ""
+OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "arxiv_data")
 LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) arXiv-Daily-Sync-Bot/1.0"
