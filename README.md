@@ -17,9 +17,13 @@ uv sync
    ```bash
    uv run fetch_arxiv_rss.py
    ```
-2. **Filter and generate Chinese digests:**
+2. **Filter and generate digests:**
    ```bash
+   # Auto mode (uses today's arXiv data)
    uv run filter_papers.py
+
+   # Manual mode (e.g. conference proceedings)
+   uv run filter_papers.py /path/to/papers.json
    ```
 
 ## Configuration

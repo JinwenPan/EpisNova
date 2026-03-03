@@ -2,16 +2,14 @@
 """
 filter_papers.py
 ================
-Downstream of fetch_arxiv_rss.py.  Loads today's arXiv CS JSON, screens
-each paper for relevance using Gemini, and generates a Chinese-language
+Screens papers for relevance using Gemini and generates a Chinese-language
 digest for relevant papers.
 
-Designed to be run once per day via cron at 11:30 PM ET (30 min after fetch).
-
-Usage:
-    python filter_papers.py
+Automatic mode (cron):  python filter_papers.py
+Manual mode:            python filter_papers.py /path/to/papers.json
 """
 
+import argparse
 import json
 import logging
 import os
@@ -139,6 +137,21 @@ EXPLANATION_PROMPT = """\
 # ---------------------------------------------------------------------------
 
 def main() -> None:
+    # ------------------------------------------------------------------
+    # Step 0 – Parse arguments
+    # ------------------------------------------------------------------
+    parser = argparse.ArgumentParser(
+        description="Screen papers for relevance and generate a digest.",
+    )
+    parser.add_argument(
+        "input_json",
+        nargs="?",
+        default=None,
+        help="Path to a JSON file of papers. "
+             "If omitted, loads today's arXiv CS JSON automatically.",
+    )
+    args = parser.parse_args()
+
     logger.info("=== filter_papers.py started ===")
 
     # ------------------------------------------------------------------
@@ -169,15 +182,25 @@ def main() -> None:
     logger.info("Loaded query from %s (%d chars).", QUERY_FILE, len(query))
 
     # ------------------------------------------------------------------
-    # Step 3 – Load today's JSON
+    # Step 3 – Load papers JSON
     # ------------------------------------------------------------------
-    json_path = os.path.join(DATA_DIR, f"arxiv_cs_{TODAY_ET}.json")
-
-    if not os.path.isfile(json_path):
-        logger.info(
-            "No data file for today (%s). Skipping.", json_path,
-        )
-        return
+    if args.input_json:
+        # Manual mode
+        json_path = args.input_json
+        if not os.path.isfile(json_path):
+            logger.error("Input file not found: %s", json_path)
+            sys.exit(1)
+        # Derive digest name from input filename (e.g. "acl2026.json" → "acl2026")
+        digest_name = os.path.splitext(os.path.basename(json_path))[0]
+        logger.info("Manual mode: using %s", json_path)
+    else:
+        # Auto mode: today's arXiv JSON
+        json_path = os.path.join(DATA_DIR, f"arxiv_cs_{TODAY_ET}.json")
+        if not os.path.isfile(json_path):
+            logger.info("No data file for today (%s). Skipping.", json_path)
+            return
+        digest_name = TODAY_ET
+        logger.info("Auto mode: using %s", json_path)
 
     with open(json_path, "r", encoding="utf-8") as fh:
         papers = json.load(fh)
@@ -250,9 +273,9 @@ def main() -> None:
     # Step 6 – Write digest markdown
     # ------------------------------------------------------------------
     os.makedirs(DIGEST_DIR, exist_ok=True)
-    digest_path = os.path.join(DIGEST_DIR, f"{TODAY_ET}.md")
+    digest_path = os.path.join(DIGEST_DIR, f"{digest_name}.md")
 
-    header = f"# arXiv CS 每日精选 — {TODAY_ET}\n\n"
+    header = f"# 论文筛选报告 — {digest_name}\n\n"
     header += f"共筛选 {len(papers)} 篇论文，其中 {len(relevant_papers)} 篇与研究兴趣相关。\n\n---\n\n"
 
     with open(digest_path, "w", encoding="utf-8") as fh:
